@@ -29,7 +29,7 @@ func Unpack(s string) (string, error) {
 				break
 			}
 
-			rep, _ := strconv.Atoi(string(r)) //игнорируем err т.к. в этот блок попадаем с валидным r
+			rep, _ := strconv.Atoi(string(r)) // игнорируем err т.к. в этот блок попадаем с валидным r
 			sb.WriteString(strings.Repeat(next, rep))
 			next = ""
 		case r == '\\':
