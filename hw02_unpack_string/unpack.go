@@ -18,7 +18,7 @@ func Unpack(s string) (string, error) {
 	for _, r := range s {
 		switch {
 		case '0' <= r && r <= '9':
-			if next == "" {
+			if next == "" && !slash {
 				return "", ErrInvalidString
 			}
 
@@ -49,6 +49,10 @@ func Unpack(s string) (string, error) {
 			sb.WriteString(next)
 			next = string(r)
 		}
+	}
+
+	if slash {
+		return "", ErrInvalidString
 	}
 
 	sb.WriteString(next)
