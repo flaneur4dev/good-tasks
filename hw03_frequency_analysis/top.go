@@ -24,7 +24,7 @@ func Top10(s string) []string {
 		}
 	}
 
-	var words []word
+	words := []word{}
 	for k, v := range m {
 		words = append(words, word{k, v})
 	}
@@ -32,9 +32,8 @@ func Top10(s string) []string {
 	sort.Slice(words, func(i, j int) bool {
 		if words[i].c == words[j].c {
 			return words[i].w < words[j].w
-		} else {
-			return words[i].c > words[j].c
 		}
+		return words[i].c > words[j].c
 	})
 
 	limit := len(words)
