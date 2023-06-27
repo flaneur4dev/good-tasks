@@ -6,10 +6,7 @@ import (
 	"strings"
 )
 
-type word struct {
-	w string
-	c int
-}
+const limit = 10
 
 var re = regexp.MustCompile(`[\s\t\n\r\.,:!\?]`)
 
@@ -24,27 +21,22 @@ func Top10(s string) []string {
 		}
 	}
 
-	words := []word{}
-	for k, v := range m {
-		words = append(words, word{k, v})
+	l := len(m)
+	res := make([]string, 0, l)
+	for w := range m {
+		res = append(res, w)
 	}
 
-	sort.Slice(words, func(i, j int) bool {
-		if words[i].c == words[j].c {
-			return words[i].w < words[j].w
+	sort.Slice(res, func(i, j int) bool {
+		curr, next := res[i], res[j]
+		if m[curr] == m[next] {
+			return curr < next
 		}
-		return words[i].c > words[j].c
+		return m[curr] > m[next]
 	})
 
-	limit := len(words)
-	if limit > 10 {
-		limit = 10
+	if l > limit {
+		return res[:limit]
 	}
-
-	res := make([]string, 0, limit)
-	for i := 0; i < limit; i++ {
-		res = append(res, words[i].w)
-	}
-
 	return res
 }
