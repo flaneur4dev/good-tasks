@@ -22,7 +22,7 @@ type list struct {
 	len   int
 }
 
-func NewList() *list {
+func NewList() List {
 	return new(list)
 }
 
@@ -104,7 +104,7 @@ func (l *list) MoveToFront(i *ListItem) {
 
 func (l *list) shrink(i *ListItem) {
 	switch {
-	case i == l.front && i == l.back:
+	case i == l.front && i == l.back: //nolint:gocritic
 		l.front = l.front.Next
 		l.back = l.back.Prev
 		return

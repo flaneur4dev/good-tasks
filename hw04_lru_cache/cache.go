@@ -22,7 +22,7 @@ type lruCache struct {
 	items    map[Key]*ListItem
 }
 
-func NewCache(capacity int) *lruCache {
+func NewCache(capacity int) Cache {
 	return &lruCache{
 		capacity: capacity,
 		queue:    NewList(),
