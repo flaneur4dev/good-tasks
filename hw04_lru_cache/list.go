@@ -104,12 +104,12 @@ func (l *list) MoveToFront(i *ListItem) {
 
 func (l *list) shrink(i *ListItem) {
 	switch {
-	case i == l.front && i == l.back: //nolint:gocritic
-		l.front = l.front.Next
-		l.back = l.back.Prev
-		return
 	case i == l.front:
 		l.front = l.front.Next
+		if i == l.back {
+			l.back = l.back.Prev
+			return
+		}
 	case i == l.back:
 		l.back = l.back.Prev
 	}
