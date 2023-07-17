@@ -62,9 +62,68 @@ func TestRun(t *testing.T) {
 		start := time.Now()
 		err := Run(tasks, workersCount, maxErrorsCount)
 		elapsedTime := time.Since(start)
-		require.NoError(t, err)
 
+		require.NoError(t, err)
 		require.Equal(t, runTasksCount, int32(tasksCount), "not all tasks were completed")
 		require.LessOrEqual(t, int64(elapsedTime), int64(sumTime/2), "tasks were run sequentially?")
+	})
+
+	t.Run("no tasks", func(t *testing.T) {
+		tasksCount := 10
+		tasks := make([]Task, 0, tasksCount)
+
+		workersCount := 5
+		maxErrorsCount := 1
+
+		err := Run(tasks, workersCount, maxErrorsCount)
+		require.NoError(t, err)
+	})
+
+	t.Run("ignore errors", func(t *testing.T) {
+		tasksCount := 42
+		tasks := make([]Task, 0, tasksCount)
+
+		for i := 0; i < tasksCount; i++ {
+			err := fmt.Errorf("error from task %d", i)
+			tasks = append(tasks, func() error {
+				time.Sleep(time.Millisecond * time.Duration(rand.Intn(100)))
+				return err
+			})
+		}
+
+		workersCount := 15
+		maxErrorsCount := 0
+		err := Run(tasks, workersCount, maxErrorsCount)
+		require.NoError(t, err)
+	})
+
+	t.Run("sequential execution", func(t *testing.T) {
+		tasksCount := 42
+		tasks := make([]Task, 0, tasksCount)
+
+		var runTasksCount int32
+		var sumTime time.Duration
+
+		for i := 0; i < tasksCount; i++ {
+			taskSleep := time.Millisecond * time.Duration(rand.Intn(100))
+			sumTime += taskSleep
+
+			tasks = append(tasks, func() error {
+				time.Sleep(taskSleep)
+				atomic.AddInt32(&runTasksCount, 1)
+				return nil
+			})
+		}
+
+		workersCount := 0
+		maxErrorsCount := 12
+
+		start := time.Now()
+		err := Run(tasks, workersCount, maxErrorsCount)
+		elapsedTime := time.Since(start)
+
+		require.NoError(t, err)
+		require.Equal(t, runTasksCount, int32(tasksCount), "not all tasks were completed")
+		require.GreaterOrEqual(t, int64(elapsedTime), int64(sumTime), "tasks were run concurrently?")
 	})
 }
