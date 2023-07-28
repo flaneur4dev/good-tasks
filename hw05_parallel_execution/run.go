@@ -32,7 +32,6 @@ func Run(tasks []Task, n, m int) (err error) {
 				if err := t(); err != nil && m > 0 {
 					select {
 					case mistakes <- struct{}{}:
-						continue
 					case <-done:
 						return
 					}
@@ -47,7 +46,6 @@ loop:
 	for _, t := range tasks {
 		select {
 		case tasksCh <- t:
-			continue
 		case <-mistakes:
 			count++
 			if count == m {
