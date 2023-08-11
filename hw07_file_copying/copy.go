@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	// "time"
 )
 
 const (
@@ -45,7 +44,7 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 		return ErrOffsetExceedsFileSize
 	}
 
-	dist, err := os.OpenFile(toPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0600)
+	dist, err := os.OpenFile(toPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o600)
 	if err != nil {
 		return err
 	}
@@ -72,7 +71,7 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 	for !isCopied {
 		nr, err := src.Read(buf)
 		switch {
-		case err == io.EOF:
+		case errors.Is(err, io.EOF):
 			isCopied = true
 		case err != nil:
 			return err
