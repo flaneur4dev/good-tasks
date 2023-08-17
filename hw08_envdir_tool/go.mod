@@ -1,3 +1,3 @@
-module github.com/fixme_my_friend/hw08_envdir_tool
+module github.com/flaneur4dev/good-tasks/hw08_envdir_tool
 
-go 1.19
+go 1.20
