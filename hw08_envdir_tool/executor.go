@@ -26,7 +26,7 @@ func run(cmd []string, env Environment, out io.Writer) int {
 		}
 	}
 
-	com := exec.Command(cmd[0], cmd[1:]...)
+	com := exec.Command(cmd[0], cmd[1:]...) //nolint:gosec
 	com.Stdin = os.Stdin
 	com.Stderr = os.Stderr
 	if out == nil {
