@@ -21,7 +21,7 @@ func (v ValidationErrors) Error() string {
 	return strings.Join(s, "\n")
 }
 
-func Validate(v interface{}) error {
+func Validate(v interface{}) error { //nolint:gocognit
 	rv := reflect.ValueOf(v)
 	if rv.Kind() != reflect.Struct {
 		return fmt.Errorf("[%w] %s", ErrType, rv.Type())
@@ -45,7 +45,7 @@ func Validate(v interface{}) error {
 		fv := rv.Field(i)
 		var err error
 
-		switch fv.Kind() {
+		switch fv.Kind() { //nolint:exhaustive
 		case reflect.String:
 			errs, err = validateString(errs, f.Name, fv.String(), cs)
 			if err != nil {
@@ -64,7 +64,7 @@ func Validate(v interface{}) error {
 				break
 			}
 
-			switch fv.Index(0).Kind() {
+			switch fv.Index(0).Kind() { //nolint:exhaustive
 			case reflect.String:
 				for i := 0; i < sLen; i++ {
 					fn := fmt.Sprintf("%s[%d]", f.Name, i)
