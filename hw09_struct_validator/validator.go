@@ -16,12 +16,12 @@ type ValidationErrors []ValidationError
 func (v ValidationErrors) Error() string {
 	s := make([]string, 0, len(v))
 	for _, e := range v {
-		s = append(s, fmt.Sprintf("%s: %s", e.Field, e.Err))
+		s = append(s, fmt.Sprintf("%s: [validation error] %s", e.Field, e.Err.Error()))
 	}
 	return strings.Join(s, "\n")
 }
 
-func Validate(v interface{}) error { //nolint:gocognit
+func Validate(v interface{}) error {
 	rv := reflect.ValueOf(v)
 	if rv.Kind() != reflect.Struct {
 		return fmt.Errorf("[%w] %s", ErrType, rv.Type())
@@ -41,52 +41,27 @@ func Validate(v interface{}) error { //nolint:gocognit
 			continue
 		}
 
-		cs := parse(tv)
 		fv := rv.Field(i)
-		var err error
+		k, ok, err := parseKind(fv)
+		if err != nil {
+			return err
+		}
+		if !ok {
+			continue
+		}
 
-		switch fv.Kind() { //nolint:exhaustive
+		cs, err := parseTag(tv, k)
+		if err != nil {
+			return err
+		}
+
+		switch k { //nolint:exhaustive
 		case reflect.String:
-			errs, err = validateString(errs, f.Name, fv.String(), cs)
-			if err != nil {
-				return err
-			}
-
+			errs = validateValue(errs, f.Name, value{s: fv.String()}, cs)
 		case reflect.Int:
-			errs, err = validateInt(errs, f.Name, fv.Int(), cs)
-			if err != nil {
-				return err
-			}
-
+			errs = validateValue(errs, f.Name, value{i: fv.Int()}, cs)
 		case reflect.Slice:
-			sLen := fv.Len()
-			if sLen == 0 {
-				break
-			}
-
-			switch fv.Index(0).Kind() { //nolint:exhaustive
-			case reflect.String:
-				for i := 0; i < sLen; i++ {
-					fn := fmt.Sprintf("%s[%d]", f.Name, i)
-					errs, err = validateString(errs, fn, fv.Index(i).String(), cs)
-					if err != nil {
-						return err
-					}
-				}
-			case reflect.Int:
-				for i := 0; i < sLen; i++ {
-					fn := fmt.Sprintf("%s[%d]", f.Name, i)
-					errs, err = validateInt(errs, fn, fv.Index(i).Int(), cs)
-					if err != nil {
-						return err
-					}
-				}
-			default:
-				return fmt.Errorf("[%w] %s", ErrType, fv.Type())
-			}
-
-		default:
-			return fmt.Errorf("[%w] %s", ErrType, fv.Type())
+			errs = validateSlice(errs, f.Name, fv, cs)
 		}
 	}
 

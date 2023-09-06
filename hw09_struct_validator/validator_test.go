@@ -101,15 +101,15 @@ func TestValidate(t *testing.T) {
 
 func TestValidateWithValidationErrors(t *testing.T) {
 	const (
-		userErr = `ID: [validation error] invalid len
-Age: [validation error] invalid min
-Email: [validation error] invalid regexp
-Role: [validation error] invalid in
-Phones[0]: [validation error] invalid len
-Phones[1]: [validation error] invalid len`
+		userErr = `ID: [validation error] invalid "len"
+Age: [validation error] invalid "min"
+Email: [validation error] invalid "regexp"
+Role: [validation error] invalid "in"
+Phones[0]: [validation error] invalid "len"
+Phones[1]: [validation error] invalid "len"`
 
-		appErr      = "Version: [validation error] invalid len"
-		responseErr = `Code: [validation error] invalid in`
+		appErr      = "Version: [validation error] invalid \"len\""
+		responseErr = "Code: [validation error] invalid \"in\""
 	)
 
 	tests := []struct {

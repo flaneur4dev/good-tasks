@@ -3,134 +3,189 @@ package hw09structvalidator
 import (
 	"errors"
 	"fmt"
+	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
 )
 
 type (
-	constraints      map[string]string
-	stringValidators map[string]func(value, limit string) error
-	intValidators    map[string]func(value int64, limit string) error
+	value struct {
+		s string
+		i int64
+	}
+	validator      func(value) error
+	validatorsWrap map[string]func(limit string, kind reflect.Kind) (validator, error)
+	constraints    map[string]validator
 )
 
 var (
-	ErrNotValid  = errors.New("validation error")
-	ErrValidator = errors.New("unexpected validator")
-	ErrType      = errors.New("unsupported type")
+	ErrType       = errors.New("unsupported type")
+	ErrNotValidIn = errors.New("invalid \"in\"")
 )
 
-var svs = stringValidators{
-	"len": func(v, l string) error {
-		vl, err := strconv.Atoi(l)
+var vw = validatorsWrap{
+	"len": func(limit string, _ reflect.Kind) (validator, error) {
+		l, err := strconv.Atoi(limit)
 		if err != nil {
-			return err
+			return nil, err
 		}
-		if len(v) != vl {
-			return fmt.Errorf("[%w] invalid len", ErrNotValid)
-		}
-		return nil
-	},
 
-	"regexp": func(v, l string) error {
-		re, err := regexp.Compile(l)
-		if err != nil {
-			return err
-		}
-		if !re.MatchString(v) {
-			return fmt.Errorf("[%w] invalid regexp", ErrNotValid)
-		}
-		return nil
-	},
-
-	"in": func(v, l string) error {
-		for _, s := range strings.Split(l, ",") {
-			if v == s {
-				return nil
+		return func(v value) error {
+			if len(v.s) != l {
+				return errors.New("invalid \"len\"")
 			}
+			return nil
+		}, nil
+	},
+
+	"regexp": func(limit string, _ reflect.Kind) (validator, error) {
+		re, err := regexp.Compile(limit)
+		if err != nil {
+			return nil, err
 		}
-		return fmt.Errorf("[%w] invalid in", ErrNotValid)
+
+		return func(v value) error {
+			if !re.MatchString(v.s) {
+				return errors.New("invalid \"regexp\"")
+			}
+			return nil
+		}, nil
+	},
+
+	"min": func(limit string, _ reflect.Kind) (validator, error) {
+		min, err := strconv.ParseInt(limit, 10, 64)
+		if err != nil {
+			return nil, err
+		}
+
+		return func(v value) error {
+			if v.i < min {
+				return errors.New("invalid \"min\"")
+			}
+			return nil
+		}, nil
+	},
+
+	"max": func(limit string, _ reflect.Kind) (validator, error) {
+		max, err := strconv.ParseInt(limit, 10, 64)
+		if err != nil {
+			return nil, err
+		}
+
+		return func(v value) error {
+			if v.i > max {
+				return errors.New("invalid \"max\"")
+			}
+			return nil
+		}, nil
+	},
+
+	"in": func(limit string, k reflect.Kind) (validator, error) {
+		switch k { //nolint:exhaustive
+		case reflect.String:
+			m := map[string]struct{}{}
+			for _, s := range strings.Split(limit, ",") {
+				m[s] = struct{}{}
+			}
+
+			return func(v value) error {
+				if _, ok := m[v.s]; ok {
+					return nil
+				}
+				return ErrNotValidIn
+			}, nil
+
+		case reflect.Int:
+			m := map[int64]struct{}{}
+			for _, s := range strings.Split(limit, ",") {
+				n, err := strconv.ParseInt(s, 10, 64)
+				if err != nil {
+					return nil, err
+				}
+				m[n] = struct{}{}
+			}
+
+			return func(v value) error {
+				if _, ok := m[v.i]; ok {
+					return nil
+				}
+				return ErrNotValidIn
+			}, nil
+
+		default:
+			return nil, ErrType
+		}
 	},
 }
 
-var ivs = intValidators{
-	"min": func(v int64, l string) error {
-		min, err := strconv.ParseInt(l, 10, 64)
-		if err != nil {
-			return err
-		}
-		if v < min {
-			return fmt.Errorf("[%w] invalid min", ErrNotValid)
-		}
-		return nil
-	},
+func parseKind(rv reflect.Value) (reflect.Kind, bool, error) {
+	kind := rv.Kind()
+	switch kind { //nolint:exhaustive
+	case reflect.String, reflect.Int:
+		return kind, true, nil
 
-	"max": func(v int64, l string) error {
-		max, err := strconv.ParseInt(l, 10, 64)
-		if err != nil {
-			return err
-		}
-		if v > max {
-			return fmt.Errorf("[%w] invalid max", ErrNotValid)
-		}
-		return nil
-	},
-
-	"in": func(v int64, l string) error {
-		for _, s := range strings.Split(l, ",") {
-			n, err := strconv.ParseInt(s, 10, 64)
-			if err != nil {
-				return err
-			}
-			if v == n {
-				return nil
-			}
-		}
-		return fmt.Errorf("[%w] invalid in", ErrNotValid)
-	},
-}
-
-func validateString(verrs ValidationErrors, name string, value string, cs constraints) (ValidationErrors, error) {
-	for k, c := range cs {
-		vf, ok := svs[k]
-		if !ok {
-			return nil, ErrValidator
+	case reflect.Slice:
+		if rv.Len() == 0 {
+			return kind, false, nil
 		}
 
-		if err := vf(value, c); err != nil {
-			if errors.Is(err, ErrNotValid) {
-				verrs = append(verrs, ValidationError{name, err})
-			} else {
-				return nil, err
-			}
+		switch rv.Index(0).Kind() { //nolint:exhaustive
+		case reflect.String, reflect.Int:
+			return kind, true, nil
+		default:
+			return kind, false, fmt.Errorf("[%w] %s", ErrType, rv.Type())
 		}
+	default:
+		return kind, false, fmt.Errorf("[%w] %s", ErrType, rv.Type())
 	}
-	return verrs, nil
 }
 
-func validateInt(verrs ValidationErrors, name string, value int64, cs constraints) (ValidationErrors, error) {
-	for k, c := range cs {
-		vf, ok := ivs[k]
-		if !ok {
-			return nil, ErrValidator
-		}
-
-		if err := vf(value, c); err != nil {
-			if errors.Is(err, ErrNotValid) {
-				verrs = append(verrs, ValidationError{name, err})
-			} else {
-				return nil, err
-			}
-		}
-	}
-	return verrs, nil
-}
-
-func parse(str string) constraints {
+func parseTag(str string, k reflect.Kind) (constraints, error) {
 	c := constraints{}
+
 	for _, s := range strings.Split(str, "|") {
 		kv := strings.Split(s, ":")
-		c[kv[0]] = kv[1]
+		name, limit := kv[0], kv[1]
+
+		w, ok := vw[name]
+		if !ok {
+			return nil, errors.New("unexpected validator")
+		}
+
+		v, err := w(limit, k)
+		if err != nil {
+			return nil, err
+		}
+		c[name] = v
 	}
-	return c
+
+	return c, nil
+}
+
+func validateValue(verrs ValidationErrors, name string, v value, cs constraints) ValidationErrors {
+	for _, vd := range cs {
+		if err := vd(v); err != nil {
+			verrs = append(verrs, ValidationError{name, err})
+		}
+	}
+	return verrs
+}
+
+func validateSlice(verrs ValidationErrors, name string, rv reflect.Value, cs constraints) ValidationErrors {
+	switch rv.Index(0).Kind() { //nolint:exhaustive
+	case reflect.String:
+		for i := 0; i < rv.Len(); i++ {
+			n := fmt.Sprintf("%s[%d]", name, i)
+			verrs = validateValue(verrs, n, value{s: rv.Index(i).String()}, cs)
+		}
+
+	case reflect.Int:
+		for i := 0; i < rv.Len(); i++ {
+			n := fmt.Sprintf("%s[%d]", name, i)
+			verrs = validateValue(verrs, n, value{i: rv.Index(i).Int()}, cs)
+		}
+	}
+
+	return verrs
 }
