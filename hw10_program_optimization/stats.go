@@ -1,12 +1,21 @@
 package hw10programoptimization
 
 import (
-	"bufio"
+	"encoding/json"
 	"errors"
 	"io"
-	"regexp"
 	"strings"
 )
+
+type User struct {
+	ID       int
+	Name     string
+	Username string
+	Email    string
+	Phone    string
+	Password string
+	Address  string
+}
 
 type DomainStat map[string]int
 
@@ -15,24 +24,19 @@ func GetDomainStat(r io.Reader, domain string) (DomainStat, error) {
 		return nil, errors.New("unimplemented reader")
 	}
 
-	re, err := regexp.Compile(`"Email":"[^@]*@[^@]*\.` + domain)
-	if err != nil {
-		return nil, err
-	}
-
+	var user User
 	result := make(DomainStat)
-	scanner := bufio.NewScanner(r)
+	dec := json.NewDecoder(r)
 
-	for scanner.Scan() {
-		email := strings.Split(string(re.Find(scanner.Bytes())), "@")
-		if len(email) != 2 {
-			continue
+	for dec.More() {
+		if err := dec.Decode(&user); err != nil {
+			return nil, err
 		}
-		result[strings.ToLower(email[1])]++
-	}
 
-	if err := scanner.Err(); err != nil {
-		return nil, err
+		if strings.Contains(user.Email, domain) {
+			email := strings.Split(user.Email, "@")
+			result[strings.ToLower(email[1])]++
+		}
 	}
 
 	return result, nil
