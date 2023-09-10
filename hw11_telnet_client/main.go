@@ -70,7 +70,6 @@ func main() {
 	case err = <-ch:
 		msg = err.Error()
 		break
-
 	}
 
 	err = client.Close()

@@ -65,7 +65,7 @@ func TestTelnetClient(t *testing.T) {
 }
 
 func TestTelnetClientWithErrors(t *testing.T) {
-	t.Run("invalid addres", func(t *testing.T) {
+	t.Run("invalid address", func(t *testing.T) {
 		timeout, err := time.ParseDuration("3s")
 		require.NoError(t, err)
 
