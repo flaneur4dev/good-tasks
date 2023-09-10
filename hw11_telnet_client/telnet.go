@@ -1,65 +1,57 @@
 package main
 
 import (
-	"bufio"
 	"errors"
 	"io"
 	"net"
 	"time"
 )
 
-type telnetClient struct {
-	addr       string
-	dialer     net.Dialer
-	conn       net.Conn
-	in         io.ReadCloser
-	inScanner  *bufio.Scanner
-	out        io.Writer
-	outScanner *bufio.Scanner
+type TelnetClient struct {
+	addr   string
+	dialer net.Dialer
+	conn   net.Conn
+	in     io.ReadCloser
+	out    io.Writer
 }
 
-func NewTelnetClient(address string, timeout time.Duration, in io.ReadCloser, out io.Writer) *telnetClient {
+func NewTelnetClient(address string, timeout time.Duration, in io.ReadCloser, out io.Writer) *TelnetClient {
 	d := net.Dialer{Timeout: timeout}
-	return &telnetClient{dialer: d, addr: address, out: out, in: in}
+	return &TelnetClient{dialer: d, addr: address, out: out, in: in}
 }
 
-func (tc *telnetClient) Connect() error {
+func (tc *TelnetClient) Connect() error {
 	conn, err := tc.dialer.Dial("tcp", tc.addr)
 	if err != nil {
 		return err
 	}
 
 	tc.conn = conn
-	tc.outScanner = bufio.NewScanner(conn)
-	tc.inScanner = bufio.NewScanner(tc.in)
 	return nil
 }
 
-func (tc *telnetClient) Send() error {
-	if !tc.inScanner.Scan() {
-		return errors.New("...EOF")
+func (tc *TelnetClient) Send() error {
+	if tc.conn == nil || tc.in == nil {
+		return errors.New("invalid send connection")
 	}
 
-	tc.conn.Write([]byte(tc.inScanner.Text() + "\n"))
-	return nil
-}
-
-func (tc *telnetClient) Receive() error {
-	if !tc.outScanner.Scan() {
-		return errors.New("...Connection was closed by peer")
-	}
-
-	tc.out.Write([]byte(tc.outScanner.Text() + "\n"))
-	return nil
-}
-
-func (tc *telnetClient) Close() error {
-	err := tc.conn.Close()
-
-	err2 := tc.in.Close()
-	if err2 != nil {
-		err = err2
-	}
-
+	_, err := io.Copy(tc.conn, tc.in)
 	return err
+}
+
+func (tc *TelnetClient) Receive() error {
+	if tc.conn == nil || tc.out == nil {
+		return errors.New("invalid receive connection")
+	}
+
+	_, err := io.Copy(tc.out, tc.conn)
+	return err
+}
+
+func (tc *TelnetClient) Close() error {
+	if tc.conn == nil {
+		return errors.New("no connection")
+	}
+
+	return tc.conn.Close()
 }

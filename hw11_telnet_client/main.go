@@ -13,64 +13,53 @@ import (
 	"time"
 )
 
-var timeout = flag.Duration("timeout", 10*time.Second, "timeout description")
+var timeout = flag.Duration("timeout", 10*time.Second, "timeout for connection")
 
 func main() {
-	l := len(os.Args)
-	if l < 3 {
+	flag.Parse()
+
+	args := flag.Args()
+	if len(args) != 2 {
 		log.Fatalln("input error: not enough arguments")
 	}
 
-	flag.Parse()
-
-	host, port := os.Args[l-2], os.Args[l-1]
+	host, port := args[0], args[1]
 	addr := net.JoinHostPort(host, port)
 
 	client := NewTelnetClient(addr, *timeout, os.Stdin, os.Stdout)
-
 	err := client.Connect()
 	if err != nil {
 		log.Fatalf("connect error: connect to %s is failed", addr)
 	}
 
-	msg := fmt.Sprintf("...Connected to %s", addr)
-	os.Stderr.Write([]byte(msg + "\n"))
-
 	ctx, stop := signal.NotifyContext(context.TODO(), syscall.SIGHUP, syscall.SIGINT)
 	defer stop()
 
-	ch := make(chan error, 2)
 	var wg sync.WaitGroup
 	wg.Add(2)
 
 	go func() {
 		defer wg.Done()
-		for {
-			if err := client.Receive(); err != nil {
-				ch <- err
-				break
-			}
+		defer stop()
+
+		if err := client.Receive(); err != nil {
+			os.Stderr.Write([]byte(err.Error() + "\n"))
+
+			return
 		}
 	}()
 
 	go func() {
 		defer wg.Done()
-		for {
-			if err := client.Send(); err != nil {
-				ch <- err
-				break
-			}
+		defer stop()
+
+		if err := client.Send(); err != nil {
+			os.Stderr.Write([]byte(err.Error() + "\n"))
+			return
 		}
 	}()
 
-	select {
-	case <-ctx.Done():
-		msg = "...Quit"
-		break
-	case err = <-ch:
-		msg = err.Error()
-		break
-	}
+	<-ctx.Done()
 
 	err = client.Close()
 	if err != nil {
@@ -78,5 +67,4 @@ func main() {
 	}
 
 	wg.Wait()
-	os.Stderr.Write([]byte(msg + "\n"))
 }
