@@ -1,12 +1,13 @@
 package hw10programoptimization
 
 import (
-	"encoding/json"
+	"bufio"
 	"errors"
 	"io"
 	"strings"
 )
 
+//easyjson:json
 type User struct {
 	ID       int
 	Name     string
@@ -26,10 +27,11 @@ func GetDomainStat(r io.Reader, domain string) (DomainStat, error) {
 
 	var user User
 	result := make(DomainStat)
-	dec := json.NewDecoder(r)
+	scanner := bufio.NewScanner(r)
 
-	for dec.More() {
-		if err := dec.Decode(&user); err != nil {
+	for scanner.Scan() {
+		err := user.UnmarshalJSON(scanner.Bytes())
+		if err != nil {
 			return nil, err
 		}
 
@@ -37,6 +39,10 @@ func GetDomainStat(r io.Reader, domain string) (DomainStat, error) {
 			email := strings.Split(user.Email, "@")
 			result[strings.ToLower(email[1])]++
 		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		return nil, err
 	}
 
 	return result, nil
