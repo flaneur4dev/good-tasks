@@ -63,3 +63,44 @@ func TestTelnetClient(t *testing.T) {
 		wg.Wait()
 	})
 }
+
+func TestTelnetClientWithErrors(t *testing.T) {
+	t.Run("invalid address", func(t *testing.T) {
+		timeout, err := time.ParseDuration("3s")
+		require.NoError(t, err)
+
+		client := NewTelnetClient("host:port", timeout, nil, nil)
+		require.Error(t, client.Connect())
+	})
+
+	t.Run("receive after close", func(t *testing.T) {
+		l, err := net.Listen("tcp", "127.0.0.1:")
+		require.NoError(t, err)
+		defer func() { require.NoError(t, l.Close()) }()
+
+		var wg sync.WaitGroup
+		wg.Add(1)
+
+		go func() {
+			defer wg.Done()
+
+			in := &bytes.Buffer{}
+			out := &bytes.Buffer{}
+
+			timeout, err := time.ParseDuration("5s")
+			require.NoError(t, err)
+
+			client := NewTelnetClient(l.Addr().String(), timeout, io.NopCloser(in), out)
+			require.NoError(t, client.Connect())
+
+			in.WriteString("hello\n")
+			err = client.Close()
+			require.NoError(t, err)
+
+			err = client.Receive()
+			require.Error(t, err)
+		}()
+
+		wg.Wait()
+	})
+}
