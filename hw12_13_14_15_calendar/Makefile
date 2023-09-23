@@ -1,5 +1,6 @@
 BIN := "./bin/calendar"
-DOCKER_IMG="calendar:develop"
+DOCKER_IMG := "calendar:develop"
+COMPOSE_CONFIG := ./deployments/compose.yaml
 
 GIT_HASH := $(shell git log --format="%h" -n 1)
 LDFLAGS := -X main.release="develop" -X main.buildDate=$(shell date -u +%Y-%m-%dT%H:%M:%S) -X main.gitHash=$(GIT_HASH)
@@ -8,7 +9,7 @@ build:
 	go build -v -o $(BIN) -ldflags "$(LDFLAGS)" ./cmd/calendar
 
 run: build
-	$(BIN) -config ./configs/config.toml
+	$(BIN) -config ./configs/config.yaml
 
 build-img:
 	docker build \
@@ -18,6 +19,12 @@ build-img:
 
 run-img: build-img
 	docker run $(DOCKER_IMG)
+
+up:
+	docker compose -f $(COMPOSE_CONFIG) up -d
+
+down:
+	docker compose -f $(COMPOSE_CONFIG) down -v
 
 version: build
 	$(BIN) version
@@ -31,4 +38,4 @@ install-lint-deps:
 lint: install-lint-deps
 	golangci-lint run ./...
 
-.PHONY: build run build-img run-img version test lint
+.PHONY: build run build-img run-img up down version test lint

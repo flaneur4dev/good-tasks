@@ -1,0 +1,10 @@
+services:
+  postgres:
+    image: postgres:15.4
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - ../migrations:/docker-entrypoint-initdb.d/
+      # - ../migrations/001_setup.sql:/docker-entrypoint-initdb.d/001_setup.sql
