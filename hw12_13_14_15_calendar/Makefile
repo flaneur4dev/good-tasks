@@ -30,12 +30,12 @@ version: build
 	$(BIN) version
 
 test:
-	go test -race ./internal/... ./pkg/...
+	go test -race ./internal/...
 
 install-lint-deps:
 	(which golangci-lint > /dev/null) || curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(shell go env GOPATH)/bin v1.54.2
 
 lint: install-lint-deps
-	golangci-lint run -v ./...
+	golangci-lint run ./...
 
 .PHONY: build run build-img run-img up down version test lint
