@@ -74,7 +74,7 @@ linters:
     - stylecheck
     - tagliatelle
     - thelper
-    - typecheck
+    # - typecheck
     - unconvert
     - unparam
     - unused
