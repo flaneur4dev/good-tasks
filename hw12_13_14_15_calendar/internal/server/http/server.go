@@ -61,13 +61,7 @@ func New(log Logger, app Application, logPath, addr string, timeout, idleTimeout
 	return s, nil
 }
 
-func (s *Server) Start(ctx context.Context) error {
-	select {
-	case <-ctx.Done():
-		return ctx.Err()
-	default:
-	}
-
+func (s *Server) Start() error {
 	err := s.srv.ListenAndServe()
 	if err != nil {
 		return err

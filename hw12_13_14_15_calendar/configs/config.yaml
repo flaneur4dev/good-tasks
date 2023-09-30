@@ -5,9 +5,8 @@ database:
   dsn: "postgresql://db_user:super_secret_password_42@localhost:5432/calendardb"
 server:
   http:
-    address: "127.0.0.1:3000"
+    address: "localhost:3000"
     timeout: 5s
     idle_timeout: 20s
-    stop_timeout: 3s
 logs:
   file_path: "/tmp/calendar-logs.txt"

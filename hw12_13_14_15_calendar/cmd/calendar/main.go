@@ -83,7 +83,7 @@ func main() {
 	go func() {
 		<-ctx.Done()
 
-		ctx, cancel := context.WithTimeout(context.Background(), cfg.Server.HTTP.StopTimeout)
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
 		defer cancel()
 
 		if err := server.Stop(ctx); err != nil {
@@ -93,7 +93,7 @@ func main() {
 
 	logg.Info("calendar is running...")
 
-	if err := server.Start(ctx); err != nil {
+	if err := server.Start(); err != nil {
 		if errors.Is(err, http.ErrServerClosed) {
 			logg.Info("calendar is stopped")
 			return

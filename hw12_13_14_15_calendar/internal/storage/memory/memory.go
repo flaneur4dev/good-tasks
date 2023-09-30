@@ -16,7 +16,7 @@ type MemStore struct {
 
 func New() *MemStore {
 	return &MemStore{
-		events: map[string]cs.Event{},
+		events: make(map[string]cs.Event),
 	}
 }
 

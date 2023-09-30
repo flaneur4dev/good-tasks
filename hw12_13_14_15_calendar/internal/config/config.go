@@ -20,7 +20,6 @@ type HTTPServerConf struct {
 	Address     string        `yaml:"address"`
 	Timeout     time.Duration `yaml:"timeout"`
 	IdleTimeout time.Duration `yaml:"idle_timeout"`
-	StopTimeout time.Duration `yaml:"stop_timeout"`
 }
 
 type ServerConf struct {
