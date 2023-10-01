@@ -2,42 +2,82 @@ package main
 
 import (
 	"context"
+	"errors"
 	"flag"
+	"fmt"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
-	"github.com/fixme_my_friend/hw12_13_14_15_calendar/internal/app"
-	"github.com/fixme_my_friend/hw12_13_14_15_calendar/internal/logger"
-	internalhttp "github.com/fixme_my_friend/hw12_13_14_15_calendar/internal/server/http"
-	memorystorage "github.com/fixme_my_friend/hw12_13_14_15_calendar/internal/storage/memory"
+	"github.com/flaneur4dev/good-tasks/hw12_13_14_15_calendar/internal/app"
+	"github.com/flaneur4dev/good-tasks/hw12_13_14_15_calendar/internal/config"
+	cs "github.com/flaneur4dev/good-tasks/hw12_13_14_15_calendar/internal/contracts"
+	"github.com/flaneur4dev/good-tasks/hw12_13_14_15_calendar/internal/logger"
+	httpserver "github.com/flaneur4dev/good-tasks/hw12_13_14_15_calendar/internal/server/http"
+	"github.com/flaneur4dev/good-tasks/hw12_13_14_15_calendar/internal/storage/memory"
+	"github.com/flaneur4dev/good-tasks/hw12_13_14_15_calendar/internal/storage/pgdb"
 )
 
-var configFile string
-
-func init() {
-	flag.StringVar(&configFile, "config", "/etc/calendar/config.toml", "Path to configuration file")
+type AppStore interface {
+	Events(ctx context.Context, start, end time.Time) ([]cs.Event, error)
+	CreateEvent(ctx context.Context, ne cs.Event) error
+	UpdateEvent(ctx context.Context, id string, ne cs.Event) error
+	DeleteEvent(ctx context.Context, id string) error
+	Check(ctx context.Context) error
+	Close() error
 }
+
+var configFile = flag.String("config", "./configs/config.yaml", "Path to configuration file")
 
 func main() {
 	flag.Parse()
 
-	if flag.Arg(0) == "version" {
+	switch flag.Arg(0) {
+	case "help":
+		printHelp()
+		return
+	case "version":
 		printVersion()
 		return
 	}
 
-	config := NewConfig()
-	logg := logger.New(config.Logger.Level)
+	cfg, err := config.New(*configFile)
+	if err != nil {
+		fmt.Printf("invalid config: %s", err)
+		os.Exit(1)
+	}
 
-	storage := memorystorage.New()
-	calendar := app.New(logg, storage)
+	logg := logger.New(cfg.Logger.Level)
 
-	server := internalhttp.NewServer(logg, calendar)
+	var s AppStore
+	if cfg.Database.Use {
+		s, err = pgdb.New(cfg.Database.Dsn)
+		if err != nil {
+			logg.Error("failed to connection to storage: " + err.Error())
+			os.Exit(1)
+		}
+		logg.Info("database connected...")
+	} else {
+		s = memory.New()
+	}
+	defer s.Close()
 
-	ctx, cancel := signal.NotifyContext(context.Background(),
-		syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
+	server, err := httpserver.New(
+		logg, app.New(logg, s),
+		cfg.Logs.FilePath,
+		cfg.Server.HTTP.Address,
+		cfg.Server.HTTP.Timeout,
+		cfg.Server.HTTP.IdleTimeout,
+	)
+	if err != nil {
+		logg.Error("failed to create server: " + err.Error())
+		s.Close()
+		os.Exit(1) //nolint:gocritic
+	}
+
+	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
 	defer cancel()
 
 	go func() {
@@ -53,9 +93,14 @@ func main() {
 
 	logg.Info("calendar is running...")
 
-	if err := server.Start(ctx); err != nil {
+	if err := server.Start(); err != nil {
+		if errors.Is(err, http.ErrServerClosed) {
+			logg.Info("calendar is stopped")
+			return
+		}
 		logg.Error("failed to start http server: " + err.Error())
 		cancel()
+		s.Close()
 		os.Exit(1) //nolint:gocritic
 	}
 }

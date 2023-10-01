@@ -12,6 +12,12 @@ var (
 	gitHash   = "UNKNOWN"
 )
 
+func printHelp() {
+	txt := `Calendar application for events notifications.
+	Usage: calendar [--config=/path/to/config/config.yaml] [help] [version]`
+	fmt.Println(txt)
+}
+
 func printVersion() {
 	if err := json.NewEncoder(os.Stdout).Encode(struct {
 		Release   string
