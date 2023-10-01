@@ -11,13 +11,7 @@ func (s *Server) loggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		t := time.Now()
 
-		host, _, err := net.SplitHostPort(r.RemoteAddr)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		ip, err := net.LookupIP(host)
+		ip, _, err := net.SplitHostPort(r.RemoteAddr)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -26,7 +20,7 @@ func (s *Server) loggingMiddleware(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r)
 
 		log := fmt.Sprintf("%s [%s] %s %s %s %d %s",
-			ip[0], t.String(),
+			ip, t.String(),
 			r.Method, r.URL.RequestURI(), r.Proto,
 			time.Since(t).Milliseconds(),
 			r.UserAgent(),
