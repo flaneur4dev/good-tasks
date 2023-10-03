@@ -8,5 +8,5 @@ var (
 	ErrCreateEvent = errors.New("failed event create")
 	ErrUpdateEvent = errors.New("failed event update")
 	ErrDeleteEvent = errors.New("failed event delete")
-	ErrPeriod      = errors.New("incorrect start of the period")
+	ErrPeriod      = errors.New("incorrect period")
 )

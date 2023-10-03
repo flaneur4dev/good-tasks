@@ -15,7 +15,7 @@ curl -L -X POST -v '127.0.0.1:3000/event' \
 # curl -L -X PUT -v '127.0.0.1:3000/event' \
 # -H 'Content-Type: application/json' \
 # --data-raw '{
-#     "id": "1",
+#     "id": "0c2e2081",
 #     "title": "event 1_1",
 #     "description": "",
 #     "owner_id": "230c866-1",
@@ -24,4 +24,4 @@ curl -L -X POST -v '127.0.0.1:3000/event' \
 #     "notification_time": "2019-02-09T10:00:00Z"
 # }'
 
-# curl -L -X DELETE -v '127.0.0.1:3000/event/0c2e2081'
+# curl -L -X DELETE -v '127.0.0.1:3000/event?id=0c2e2081'

@@ -18,23 +18,25 @@ type DatabaseConf struct {
 
 type HTTPServerConf struct {
 	Address     string        `yaml:"address"`
+	LogFile     string        `yaml:"log_file"`
 	Timeout     time.Duration `yaml:"timeout"`
 	IdleTimeout time.Duration `yaml:"idle_timeout"`
 }
 
-type ServerConf struct {
-	HTTP HTTPServerConf `yaml:"http"`
+type GRPCServerConf struct {
+	Port    string `yaml:"port"`
+	LogFile string `yaml:"log_file"`
 }
 
-type LogsConf struct {
-	FilePath string `yaml:"file_path"`
+type ServerConf struct {
+	HTTP HTTPServerConf `yaml:"http"`
+	GRPC GRPCServerConf `yaml:"grpc"`
 }
 
 type Config struct {
 	Logger   LoggerConf   `yaml:"logger"`
 	Database DatabaseConf `yaml:"database"`
 	Server   ServerConf   `yaml:"server"`
-	Logs     LogsConf     `yaml:"logs"`
 }
 
 func New(path string) (Config, error) {

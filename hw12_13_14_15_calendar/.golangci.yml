@@ -21,6 +21,10 @@ linters-settings:
           - github.com/flaneur4dev/good-tasks/hw12_13_14_15_calendar/internal
           - github.com/go-chi/chi/v5
           - github.com/jackc/pgx/v5/stdlib
+          - github.com/stretchr/testify/require
+          - google.golang.org/grpc
+          - google.golang.org/protobuf
+          - gopkg.in/yaml.v3
 
 issues:
   exclude-rules:
@@ -31,6 +35,7 @@ issues:
         - gocyclo
         - gofumpt
         - gosec
+        - noctx
 
 linters:
   disable-all: true
@@ -48,7 +53,7 @@ linters:
     # - gci
     - gocognit
     - goconst
-    # - gocritic
+    - gocritic
     - gocyclo
     - godot
     - gofmt

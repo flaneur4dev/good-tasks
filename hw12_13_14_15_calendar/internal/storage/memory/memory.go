@@ -32,8 +32,8 @@ func (ms *MemStore) Events(ctx context.Context, start, end time.Time) ([]cs.Even
 
 	es := []cs.Event{}
 	for _, v := range ms.events {
-		eventDay := v.StartDate.YearDay()
-		if start.YearDay() <= eventDay && eventDay < end.YearDay() {
+		eventDay := v.StartDate.Unix()
+		if start.Unix() <= eventDay && eventDay < end.Unix() {
 			es = append(es, v)
 		}
 	}

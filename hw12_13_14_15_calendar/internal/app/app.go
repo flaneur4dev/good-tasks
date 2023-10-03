@@ -48,6 +48,9 @@ func (a *App) Events(ctx context.Context, date time.Time, period string) ([]cs.E
 			return nil, es.ErrPeriod
 		}
 		end = date.AddDate(0, 1, 0)
+
+	default:
+		return nil, es.ErrPeriod
 	}
 
 	es, err := a.storage.Events(ctx, date, end)
