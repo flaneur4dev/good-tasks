@@ -8,8 +8,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/go-chi/chi/v5"
-
 	cs "github.com/flaneur4dev/good-tasks/hw12_13_14_15_calendar/internal/contracts"
 	es "github.com/flaneur4dev/good-tasks/hw12_13_14_15_calendar/internal/mistakes"
 )
@@ -42,12 +40,6 @@ type (
 	}
 )
 
-var periods = map[string]struct{}{
-	"day":   {},
-	"week":  {},
-	"month": {},
-}
-
 func HandleEvents(srv Events) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		d, err := time.Parse(time.DateTime, r.URL.Query().Get("date"))
@@ -57,10 +49,6 @@ func HandleEvents(srv Events) http.HandlerFunc {
 		}
 
 		p := r.URL.Query().Get("period")
-		if _, ok := periods[p]; !ok {
-			http.Error(w, "incorrect period", http.StatusBadRequest)
-			return
-		}
 
 		evs, err := srv.Events(r.Context(), d, p)
 		if err != nil {
@@ -159,7 +147,7 @@ func HandleUpdateEvent(srv Updater) http.HandlerFunc {
 
 func HandleDeleteEvent(srv Deleter) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		id := chi.URLParam(r, "id")
+		id := r.URL.Query().Get("id")
 
 		err := srv.DeleteEvent(r.Context(), id)
 		if err != nil {

@@ -6,7 +6,9 @@ database:
 server:
   http:
     address: "localhost:3000"
+    log_file: "/tmp/calendar-http-logs.txt"
     timeout: 5s
     idle_timeout: 20s
-logs:
-  file_path: "/tmp/calendar-logs.txt"
+  grpc:
+    port: ":50051"
+    log_file: "/tmp/calendar-grpc-logs.txt"

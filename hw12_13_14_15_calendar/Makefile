@@ -1,6 +1,7 @@
 BIN := "./bin/calendar"
 DOCKER_IMG := "calendar:develop"
 COMPOSE_CONFIG := ./deployments/compose.yaml
+PB_PATH := internal/server/grpc/pb
 
 GIT_HASH := $(shell git log --format="%h" -n 1)
 LDFLAGS := -X main.release="develop" -X main.buildDate=$(shell date -u +%Y-%m-%dT%H:%M:%S) -X main.gitHash=$(GIT_HASH)
@@ -20,6 +21,13 @@ build-img:
 run-img: build-img
 	docker run $(DOCKER_IMG)
 
+generate:
+	protoc \
+		--proto_path=api \
+		--go_out=$(PB_PATH) --go_opt=paths=source_relative \
+		--go-grpc_out=$(PB_PATH) --go-grpc_opt=paths=source_relative \
+		event_service.proto
+
 up:
 	docker compose -f $(COMPOSE_CONFIG) up -d
 
@@ -38,4 +46,4 @@ install-lint-deps:
 lint: install-lint-deps
 	golangci-lint run ./...
 
-.PHONY: build run build-img run-img up down version test lint
+.PHONY: build run build-img run-img generate up down version test lint
