@@ -21,23 +21,23 @@ func TestHandlersStepByStep(t *testing.T) {
 	a := app.New(slog.Default(), memory.New())
 
 	newEvent := cs.Event{
-		ID:               "0c2e2081",
-		Title:            "event 1",
-		Description:      "description 1",
-		OwnerID:          "2081",
-		StartDate:        time.Date(2023, time.September, 1, 10, 10, 0, 0, time.UTC),
-		FinishDate:       time.Date(2023, time.September, 2, 11, 0, 0, 0, time.UTC),
-		NotificationTime: time.Date(2023, time.September, 2, 10, 0, 0, 0, time.UTC),
+		ID:              "0c2e2081",
+		Title:           "event 1",
+		Description:     "description 1",
+		OwnerID:         "2081",
+		StartDate:       time.Date(2023, time.September, 1, 10, 10, 0, 0, time.UTC),
+		FinishDate:      time.Date(2023, time.September, 2, 11, 0, 0, 0, time.UTC),
+		NotificationDay: time.Date(2023, time.September, 2, 0, 0, 0, 0, time.UTC),
 	}
 
 	updatedEvent := cs.Event{
-		ID:               "0c2e2081",
-		Title:            "event 1",
-		Description:      "new description 1",
-		OwnerID:          "2081",
-		StartDate:        time.Date(2023, time.September, 10, 10, 10, 0, 0, time.UTC),
-		FinishDate:       time.Date(2023, time.September, 12, 11, 0, 0, 0, time.UTC),
-		NotificationTime: time.Date(2023, time.September, 12, 10, 0, 0, 0, time.UTC),
+		ID:              "0c2e2081",
+		Title:           "event 1",
+		Description:     "new description 1",
+		OwnerID:         "2081",
+		StartDate:       time.Date(2023, time.September, 10, 10, 10, 0, 0, time.UTC),
+		FinishDate:      time.Date(2023, time.September, 12, 11, 0, 0, 0, time.UTC),
+		NotificationDay: time.Date(2023, time.September, 12, 0, 0, 0, 0, time.UTC),
 	}
 
 	tests := [...]struct {

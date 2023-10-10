@@ -1,4 +1,7 @@
-BIN := "./bin/calendar"
+CALENDAR_BIN := "./bin/calendar"
+SCHEDULER_BIN := "./bin/scheduler"
+SENDER_BIN := "./bin/sender"
+
 DOCKER_IMG := "calendar:develop"
 COMPOSE_CONFIG := ./deployments/compose.yaml
 PB_PATH := internal/server/grpc/pb
@@ -7,10 +10,14 @@ GIT_HASH := $(shell git log --format="%h" -n 1)
 LDFLAGS := -X main.release="develop" -X main.buildDate=$(shell date -u +%Y-%m-%dT%H:%M:%S) -X main.gitHash=$(GIT_HASH)
 
 build:
-	go build -v -o $(BIN) -ldflags "$(LDFLAGS)" ./cmd/calendar
+	go build -v -o $(CALENDAR_BIN) -ldflags "$(LDFLAGS)" ./cmd/calendar
+	go build -v -o $(SCHEDULER_BIN) -ldflags "$(LDFLAGS)" ./cmd/scheduler
+	go build -v -o $(SENDER_BIN) -ldflags "$(LDFLAGS)" ./cmd/sender
 
 run: build
-	$(BIN) -config ./configs/config.yaml
+	$(CALENDAR_BIN) -config ./configs/calendar.yaml
+	$(SCHEDULER_BIN) -config ./configs/scheduler.yaml
+	$(SENDER_BIN) -config ./configs/sender.yaml
 
 build-img:
 	docker build \
@@ -35,7 +42,7 @@ down:
 	docker compose -f $(COMPOSE_CONFIG) down -v
 
 version: build
-	$(BIN) version
+	$(CALENDAR_BIN) version
 
 test:
 	go test -race ./internal/...

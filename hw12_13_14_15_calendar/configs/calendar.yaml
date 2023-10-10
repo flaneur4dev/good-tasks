@@ -1,7 +1,7 @@
 logger:
   level: "INFO"
 database:
-  use: false
+  use: true
   dsn: "postgresql://db_user:super_secret_password_42@localhost:5432/calendardb"
 server:
   http:

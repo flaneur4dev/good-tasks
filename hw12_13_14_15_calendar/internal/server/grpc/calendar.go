@@ -45,13 +45,13 @@ func (s *calendarServer) Events(ctx context.Context, req *pb.EventsRequest) (*pb
 	pbevs := make([]*pb.Event, 0, len(evs))
 	for _, e := range evs {
 		pbevs = append(pbevs, &pb.Event{
-			Id:               e.ID,
-			Title:            e.Title,
-			Description:      e.Description,
-			OwnerId:          e.OwnerID,
-			StartDate:        timestamppb.New(e.StartDate),
-			FinishDate:       timestamppb.New(e.FinishDate),
-			NotificationTime: timestamppb.New(e.NotificationTime),
+			Id:              e.ID,
+			Title:           e.Title,
+			Description:     e.Description,
+			OwnerId:         e.OwnerID,
+			StartDate:       timestamppb.New(e.StartDate),
+			FinishDate:      timestamppb.New(e.FinishDate),
+			NotificationDay: timestamppb.New(e.NotificationDay),
 		})
 	}
 
@@ -60,13 +60,13 @@ func (s *calendarServer) Events(ctx context.Context, req *pb.EventsRequest) (*pb
 
 func (s *calendarServer) CreateEvent(ctx context.Context, req *pb.Event) (*pb.EventResponse, error) {
 	e := cs.Event{
-		ID:               req.GetId(),
-		Title:            req.GetTitle(),
-		Description:      req.GetDescription(),
-		OwnerID:          req.GetOwnerId(),
-		StartDate:        req.GetStartDate().AsTime(),
-		FinishDate:       req.GetFinishDate().AsTime(),
-		NotificationTime: req.GetNotificationTime().AsTime(),
+		ID:              req.GetId(),
+		Title:           req.GetTitle(),
+		Description:     req.GetDescription(),
+		OwnerID:         req.GetOwnerId(),
+		StartDate:       req.GetStartDate().AsTime(),
+		FinishDate:      req.GetFinishDate().AsTime(),
+		NotificationDay: req.GetNotificationDay().AsTime(),
 	}
 
 	err := s.app.CreateEvent(ctx, e)
@@ -84,13 +84,13 @@ func (s *calendarServer) CreateEvent(ctx context.Context, req *pb.Event) (*pb.Ev
 
 func (s *calendarServer) UpdateEvent(ctx context.Context, req *pb.Event) (*pb.EventResponse, error) {
 	e := cs.Event{
-		ID:               req.GetId(),
-		Title:            req.GetTitle(),
-		Description:      req.GetDescription(),
-		OwnerID:          req.GetOwnerId(),
-		StartDate:        req.GetStartDate().AsTime(),
-		FinishDate:       req.GetFinishDate().AsTime(),
-		NotificationTime: req.GetNotificationTime().AsTime(),
+		ID:              req.GetId(),
+		Title:           req.GetTitle(),
+		Description:     req.GetDescription(),
+		OwnerID:         req.GetOwnerId(),
+		StartDate:       req.GetStartDate().AsTime(),
+		FinishDate:      req.GetFinishDate().AsTime(),
+		NotificationDay: req.GetNotificationDay().AsTime(),
 	}
 
 	err := s.app.UpdateEvent(ctx, e.ID, e)

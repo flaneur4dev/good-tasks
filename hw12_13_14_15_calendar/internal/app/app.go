@@ -6,6 +6,7 @@ import (
 
 	cs "github.com/flaneur4dev/good-tasks/hw12_13_14_15_calendar/internal/contracts"
 	es "github.com/flaneur4dev/good-tasks/hw12_13_14_15_calendar/internal/mistakes"
+	"github.com/flaneur4dev/good-tasks/hw12_13_14_15_calendar/internal/utils"
 )
 
 type Logger interface {
@@ -63,6 +64,8 @@ func (a *App) Events(ctx context.Context, date time.Time, period string) ([]cs.E
 }
 
 func (a *App) CreateEvent(ctx context.Context, ne cs.Event) error {
+	ne.NotificationDay = utils.ZeroTime(ne.NotificationDay)
+
 	err := a.storage.CreateEvent(ctx, ne)
 	if err != nil {
 		a.log.Error("failed to create event: " + err.Error())

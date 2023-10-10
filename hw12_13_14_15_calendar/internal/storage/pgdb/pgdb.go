@@ -38,9 +38,7 @@ func New(dsn string) (*DBStorage, error) {
 }
 
 func (ds *DBStorage) Events(ctx context.Context, start, end time.Time) ([]cs.Event, error) {
-	es := []cs.Event{}
-
-	selq := `SELECT id, title, description, owner_id, start_date, finish_date, notification_time
+	selq := `SELECT id, title, description, owner_id, start_date, finish_date, notification_day
 		FROM events
 		WHERE start_date BETWEEN $1 AND $2;
 	`
@@ -50,24 +48,25 @@ func (ds *DBStorage) Events(ctx context.Context, start, end time.Time) ([]cs.Eve
 	}
 	defer rows.Close()
 
+	es := make([]cs.Event, 0)
 	for rows.Next() {
 		var (
 			id, title, desc, oID string
-			st, ft, nt           sql.NullTime
+			st, ft, nd           sql.NullTime
 		)
 
-		if err := rows.Scan(&id, &title, &desc, &oID, &st, &ft, &nt); err != nil {
+		if err := rows.Scan(&id, &title, &desc, &oID, &st, &ft, &nd); err != nil {
 			return nil, err
 		}
 
 		es = append(es, cs.Event{
-			ID:               id,
-			Title:            title,
-			Description:      desc,
-			OwnerID:          oID,
-			StartDate:        st.Time,
-			FinishDate:       ft.Time,
-			NotificationTime: nt.Time,
+			ID:              id,
+			Title:           title,
+			Description:     desc,
+			OwnerID:         oID,
+			StartDate:       st.Time,
+			FinishDate:      ft.Time,
+			NotificationDay: nd.Time,
 		})
 	}
 
@@ -92,7 +91,7 @@ func (ds *DBStorage) CreateEvent(ctx context.Context, ne cs.Event) error {
 		return err
 	}
 
-	insq := `INSERT INTO events (id, title, description, owner_id, start_date, finish_date, notification_time)
+	insq := `INSERT INTO events (id, title, description, owner_id, start_date, finish_date, notification_day)
 		VALUES ($1, $2, $3, $4, $5, $6, $7);
 	`
 	res, err := ds.db.ExecContext(ctx, insq,
@@ -102,7 +101,7 @@ func (ds *DBStorage) CreateEvent(ctx context.Context, ne cs.Event) error {
 		ne.OwnerID,
 		ne.StartDate.Format(time.DateTime),
 		ne.FinishDate.Format(time.DateTime),
-		ne.NotificationTime.Format(time.DateTime),
+		ne.NotificationDay.Format(time.DateTime),
 	)
 	if err != nil {
 		return err
@@ -121,7 +120,7 @@ func (ds *DBStorage) CreateEvent(ctx context.Context, ne cs.Event) error {
 
 func (ds *DBStorage) UpdateEvent(ctx context.Context, id string, ne cs.Event) error {
 	updq := `UPDATE events
-		SET title=$1, description=$2, owner_id=$3, start_date=$4, finish_date=$5, notification_time=$6
+		SET title=$1, description=$2, owner_id=$3, start_date=$4, finish_date=$5, notification_day=$6
 		WHERE id=$7;
 	`
 	res, err := ds.db.ExecContext(ctx, updq,
@@ -130,7 +129,7 @@ func (ds *DBStorage) UpdateEvent(ctx context.Context, id string, ne cs.Event) er
 		ne.OwnerID,
 		ne.StartDate.Format(time.DateTime),
 		ne.FinishDate.Format(time.DateTime),
-		ne.NotificationTime.Format(time.DateTime),
+		ne.NotificationDay.Format(time.DateTime),
 		id,
 	)
 	if err != nil {
@@ -182,7 +181,7 @@ func (ds *DBStorage) initDB() error {
 		owner_id varchar(50) NOT NULL,
 		start_date timestamp,
 		finish_date timestamp,
-		notification_time timestamp
+		notification_day timestamp
 	);`
 
 	_, err := ds.db.Exec(q)
