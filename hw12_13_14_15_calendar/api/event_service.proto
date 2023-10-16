@@ -38,5 +38,5 @@ message Event {
   string owner_id = 4;
   google.protobuf.Timestamp start_date = 5;
   google.protobuf.Timestamp finish_date = 6;
-  google.protobuf.Timestamp notification_time = 7;
+  google.protobuf.Timestamp notification_day = 7;
 }

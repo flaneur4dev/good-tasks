@@ -31,7 +31,7 @@ type appStore interface {
 	Close() error
 }
 
-var configFile = flag.String("config", "./configs/config.yaml", "Path to configuration file")
+var configFile = flag.String("config", "./configs/calendar.yaml", "path to configuration file")
 
 func main() {
 	flag.Parse()
@@ -45,7 +45,7 @@ func main() {
 		return
 	}
 
-	cfg, err := config.New(*configFile)
+	cfg, err := config.Calendar(*configFile)
 	if err != nil {
 		fmt.Printf("invalid config: %s", err)
 		os.Exit(1)

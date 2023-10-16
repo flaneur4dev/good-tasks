@@ -11,7 +11,7 @@ CREATE TABLE events (
   owner_id varchar(50) NOT NULL,
   start_date timestamp,
   finish_date timestamp,
-  notification_time timestamp
+  notification_day timestamp
 );
 
 GRANT ALL PRIVILEGES ON SCHEMA public TO db_user;
