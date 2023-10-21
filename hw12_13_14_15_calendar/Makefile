@@ -4,6 +4,7 @@ SENDER_BIN := "./bin/sender"
 
 DOCKER_IMG := "calendar:develop"
 COMPOSE_CONFIG := ./deployments/compose.yaml
+TEST_CONFIG := ./deployments/compose.test.yaml
 PB_PATH := internal/server/grpc/pb
 
 GIT_HASH := $(shell git log --format="%h" -n 1)
@@ -47,10 +48,17 @@ version: build
 test:
 	go test -race ./internal/...
 
+integration-tests:
+	docker compose -f $(COMPOSE_CONFIG) -f $(TEST_CONFIG) up -d ;\
+	test_status_code=0 ;\
+	docker compose -f $(COMPOSE_CONFIG) -f $(TEST_CONFIG) run integration_tests go test -v /app/tests || test_status_code=$$? ;\
+	docker compose -f $(COMPOSE_CONFIG) -f $(TEST_CONFIG) down -v ;\
+	exit $$test_status_code ;
+
 install-lint-deps:
 	(which golangci-lint > /dev/null) || curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(shell go env GOPATH)/bin v1.54.2
 
 lint: install-lint-deps
 	golangci-lint run ./...
 
-.PHONY: build run build-img run-img generate up down version test lint
+.PHONY: build run build-img run-img generate up down version test integration-tests lint

@@ -1,0 +1,21 @@
+services:
+  integration_tests:
+    build:
+      context: ../
+      dockerfile: build/test.Dockerfile
+    image: integration-tests:0.1
+    environment:
+      - TEST_DELAY=2s
+      - TEST_REQUEST_TIMEOUT=100ms
+      - TEST_HTTP=http://calendar:3000
+      - TEST_GRPC=calendar:50051
+      - TEST_DB=postgresql://db_user:super_secret_password_42@postgres:5432/calendardb
+    depends_on:
+      - calendar
+      - scheduler
+      - sender
+      - postgres
+      - rabbitmq
+    networks:
+      - db
+      - mq
