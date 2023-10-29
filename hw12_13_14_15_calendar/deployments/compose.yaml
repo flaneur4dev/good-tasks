@@ -1,15 +1,63 @@
 services:
+  calendar:
+    build:
+      context: ../
+      dockerfile: build/calendar.Dockerfile
+    image: calendar:0.1
+    ports:
+      - "3000:3000"
+      - "50051:50051"
+    depends_on:
+      - postgres
+    restart: on-failure
+    networks:
+      - db
+
+  scheduler:
+    build:
+      context: ../
+      dockerfile: build/scheduler.Dockerfile
+    image: scheduler:0.1
+    depends_on:
+      - postgres
+      - rabbitmq
+    restart: on-failure
+    networks:
+      - db
+      - mq
+
+  sender:
+    build:
+      context: ../
+      dockerfile: build/sender.Dockerfile
+    image: sender:0.1
+    depends_on:
+      - rabbitmq
+    restart: on-failure
+    networks:
+      - mq
+
   postgres:
     image: postgres:15.4
     ports:
       - "5432:5432"
     environment:
       POSTGRES_PASSWORD: postgres
+    networks:
+      - db
     volumes:
       - ../migrations:/docker-entrypoint-initdb.d/
       # - ../migrations/001_setup.sql:/docker-entrypoint-initdb.d/001_setup.sql
+
   rabbitmq:
     image: rabbitmq:3.12-management
+    hostname: rabbitmq
     ports:
       - "5672:5672"
       - "15672:15672"
+    networks:
+      - mq
+
+networks:
+  db:
+  mq:

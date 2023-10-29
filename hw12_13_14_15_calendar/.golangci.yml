@@ -23,6 +23,7 @@ linters-settings:
           - github.com/jackc/pgx/v5/stdlib
           - github.com/rabbitmq/amqp091-go
           - github.com/stretchr/testify/require
+          - github.com/stretchr/testify/suite
           - google.golang.org/grpc
           - google.golang.org/protobuf
           - gopkg.in/yaml.v3
